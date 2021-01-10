@@ -1,34 +1,117 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"> <!-- displays site properly based on user's device -->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- displays site properly based on user's device -->
 
-  <link rel="icon" type="image/png" sizes="32x32" href="./images/favicon-32x32.png">
-  
-  <title>Frontend Mentor | IP Address Tracker</title>
+    <link rel="icon" type="image/png" sizes="32x32" href="./images/favicon-32x32.png">
 
-  <!-- Feel free to remove these styles or customise in your own stylesheet 👍 -->
-  <style>
-    .attribution { font-size: 11px; text-align: center; }
-    .attribution a { color: hsl(228, 45%, 44%); }
-  </style>
+    <link rel="preconnect" href="https://fonts.gstatic.com">
+    <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;700&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css"
+          integrity="sha512-xodZBNTC5n17Xt2atTPuE1HxjVMSvLVW9ocqUKLsCC5CXdbqCmblAshOMAS6/keqq/sMZMZ19scR4PsZChSR7A=="
+          crossorigin=""/>
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"
+            integrity="sha512-XQoYMqMTK8LvdxXYG3nZ448hOEQiglfqkJs1NOQV44cWnUrBc8PkAOcXy20w0vlaXaVUearIOBhiXZ5V3ynxwA=="
+            crossorigin=""></script>
+    <script src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
+
+    <title>Frontend Mentor | IP Address Tracker</title>
+    <link href="style.css" type="text/css" rel="stylesheet"/>
 </head>
 <body>
+<div class="wrapper">
+    <header>
+        <h1>
+            IP Address Tracker
+        </h1>
 
-  IP Address Tracker
+        <div class="search">
+            <input type="text" id="ip-address-input" name="phone" placeholder="Search for any IP address or domain"><br><br>
+            <button type="submit"></button>
+        </div>
 
-  Search for any IP address or domain
+        <div class="details-card">
+            <ul>
+                <li>
+                    <h2>IP Address</h2>
+                    <span id="ip-address"></span>
+                </li>
+                <li>
+                    <h2>Location</h2>
+                    <span id="address"></span>
+                </li>
+                <li>
+                    <h2>Timezone</h2>
+                    <span id="timezone"></span>
+                </li>
+                <li>
+                    <h2>ISP</h2>
+                    <span id="isp"></span>
+                </li>
+            </ul>
+        </div>
+    </header>
 
-  IP Address
-  Location
-  Timezone
-    UTC <!-- add offset value dynamically using the API -->
-  ISP
-  
-  <div class="attribution">
-    Challenge by <a href="https://www.frontendmentor.io?ref=challenge" target="_blank">Frontend Mentor</a>. 
-    Coded by <a href="#">Your Name Here</a>.
-  </div>
+    <div id="leaflet-map"></div>
+
+    <div class="attribution">
+        Challenge by <a href="https://www.frontendmentor.io?ref=challenge" target="_blank">Frontend Mentor</a>.
+        Coded by <a href="#">snadev</a>
+    </div>
+</div>
+<script>
+    const input = document.querySelector("input");
+    const button = document.querySelector("button");
+    const ipify_api_key = "at_jMuJigMwEEN8CxngG0MMMjclzgf4z";
+    const leafletMap = L.map('leaflet-map');
+
+    L.tileLayer('https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token=pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4NXVycTA2emYycXBndHRqcmZ3N3gifQ.rJcFIG214AriISLbB6B5aw', {
+        maxZoom: 20,
+        id: 'mapbox/streets-v11',
+        tileSize: 512,
+        zoomOffset: -1
+    }).addTo(leafletMap);
+
+    button.addEventListener('click', onSearchButtonClick);
+    input.addEventListener('keypress', function (e) {
+        if (e.key === 'Enter') {
+            onSearchButtonClick();
+        }
+    });
+
+    $.getJSON('https://api.ipify.org?format=jsonp&callback=?', function(data) {
+        input.value = data.ip;
+        loadDataByIP(data.ip);
+    });
+
+    function onSearchButtonClick() {
+        if(input.value) {
+            const ip = input.value;
+            loadDataByIP(ip);
+        }
+    }
+
+    function loadDataByIP(ipAddress) {
+        $(function () {
+            $.ajax({
+                url: "https://geo.ipify.org/api/v1",
+                data: {apiKey: ipify_api_key, ipAddress: ipAddress},
+                success: function(data) {
+                    const location = data.location;
+
+                    document.getElementById("ip-address").innerHTML = data.ip;
+                    document.getElementById("address").innerHTML = location.city + ", " + location.region + " " + location.postalCode;
+                    document.getElementById("timezone").innerHTML = "UTC " + location.timezone;
+                    document.getElementById("isp").innerHTML = data.isp;
+
+                    leafletMap.setView([location.lat, location.lng], 13);
+                }
+            });
+        });
+    }
+</script>
 </body>
 </html>
